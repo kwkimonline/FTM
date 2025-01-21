@@ -1,5 +1,4 @@
 import os
-import random
 import csv
 import numpy as np
 import torch
@@ -19,7 +18,6 @@ class Trainer:
     def __init__(self, args):
         torch.set_num_threads(8)
 
-        random.seed(args.seed)
         np.random.seed(args.seed)
         torch.manual_seed(args.seed)
         torch.cuda.manual_seed_all(args.seed)
@@ -119,7 +117,7 @@ class Trainer:
         """ task performances """
         # acc
         acc = (all_preds == all_labels).float().mean()
-        # bass
+        # bacc
         bacc = (all_preds[all_labels == 0] == all_labels[all_labels == 0]).float().mean()
         bacc += (all_preds[all_labels == 1] == all_labels[all_labels == 1]).float().mean()
         bacc /= 2.0
@@ -134,7 +132,7 @@ class Trainer:
         dp = (preds0.mean() - preds1.mean()).abs()
         # meandp
         meandp = (probs0.mean() - probs1.mean()).abs()
-        # wasserstein dp
+        # wasserstein dp (assumed as Gaussian)
         wdp = wasserstein_distance(probs0.detach().cpu().numpy(), probs1.detach().cpu().numpy())
         # sdp & ksdp
         sdps = []
@@ -225,7 +223,7 @@ class Trainer:
 
         self.f_model_path = self.f_model_dir + f'lmda_f-{args.lmda_f}.pt'
 
-        criterion= F.cross_entropy
+        criterion = F.cross_entropy
 
         model = MLP(input_dim=self.input_dim+1, hidden_dims=[self.input_dim, self.input_dim], output_dim=2, act='ReLU').cuda()
         model_optimizer = torch.optim.Adam(model.parameters(), lr=args.model_lr)
